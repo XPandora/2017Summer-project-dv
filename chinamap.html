@@ -1,0 +1,98 @@
+<html>
+  <head>  
+        <meta charset="utf-8">  
+        <title>2015年中国雾霾分布图</title>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+        <style>
+            .tooltip{
+                font-family: simsun;
+                font-size: 14px;
+                width: 150px;
+                height: auto;
+                position: absolute;
+                text-align: center;
+                border-style: solid;
+                border-width: 1px;
+                background-color: white;
+                border-radius: 5px;
+            }
+
+        </style>
+  </head> 
+<style>
+
+</style>
+<body>
+<script>
+	var width  = 1000;
+	var height = 1000;
+
+
+	var svg = d3.select("body")
+        .append("svg")
+	    .attr("width", width)
+	    .attr("height", height)
+	    .append("g")
+	    .attr("transform", "translate(0,0)");
+	
+	var projection = d3.geo.mercator()
+        .center([107, 31])
+        .scale(850)
+        .translate([width/2, height/2]);
+	
+	var path = d3.geo.path()
+        .projection(projection);
+
+    var colorScale = d3.scale.linear()
+        .domain([0,35,85])
+        .range(["white","white","blue"]);
+
+    var div = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
+
+
+	d3.json("china.geojson", function(error, root) {
+		
+		if (error) 
+			return console.error(error);
+		console.log(root.features);
+		
+		svg.selectAll("path")
+			.data( root.features )
+			.enter()
+			.append("path")
+			.attr("stroke","#000")
+			.attr("stroke-width",1)
+			.attr("fill", function(d,i){
+			    if(d.properties.density == "Unknown") return "white";
+				return colorScale(d.properties.density);
+			})
+			.attr("d", path )
+			.on("mouseover",function(d,i){
+                div.html(d.properties.name
+                    + "</br>PM2.5平均浓度：" + d.properties.density
+                    + "</br>全国排名：" + d. properties.rank )
+                    .style("left", (d3.event.pageX) + "px")
+                    .style("top", (d3.event.pageY + 20) + "px")
+                    .style("opacity",1.0);
+            })
+            .on("mousemove",function (d) {
+                div.style("left", (d3.event.pageX) + "px")
+                    .style("top", (d3.event.pageY + 20) + "px")
+            })
+            .on("mouseout",function(d,i){
+                d3.select(this)
+                    .attr("fill",function(){
+                        if(d.properties.density == "Unknown") return "white";
+                        return colorScale(d.properties.density);
+                    });
+                div.style("opacity", 0);
+            });
+		
+	});
+
+</script>
+	
+</body>  
+</html>  
